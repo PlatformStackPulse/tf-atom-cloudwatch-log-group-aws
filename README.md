@@ -3,9 +3,36 @@
 [![CI](https://github.com/PlatformStackPulse/tf-atom-cloudwatch-log-group-aws/actions/workflows/ci.yml/badge.svg)](https://github.com/PlatformStackPulse/tf-atom-cloudwatch-log-group-aws/actions/workflows/ci.yml)
 ![Terraform](https://img.shields.io/badge/terraform-%3E%3D1.6.0-blueviolet)
 
-## Purpose
+Terraform atom that provisions a single AWS CloudWatch Log Group for centralized logging, with tf-label naming and tagging.
 
-Terraform atom: AWS CloudWatch Log Group - creates a log group for centralized logging.
+## Features
+
+- Creates one `aws_cloudwatch_log_group`, gated by the tf-label `enabled` flag (set `enabled = false` to create nothing).
+- Derives the log group name from the tf-label `id` (`/aws/{id}`) or accepts an explicit `log_group_name` override.
+- Configurable log `retention_in_days` (defaults to 30; use `0` to never expire).
+- Optional KMS encryption at rest via `kms_key_id` (KMS key ARN).
+- Consistent naming and tagging through the standard tf-label `context` interface (`namespace`, `stage`, `name`, `tags`, ...).
+
+## Usage
+
+```hcl
+module "log_group" {
+  source = "git::https://github.com/PlatformStackPulse/tf-atom-cloudwatch-log-group-aws.git?ref=v1.0.0"
+
+  # tf-label context
+  namespace = "eg"
+  stage     = "prod"
+  name      = "api"
+
+  # module inputs (all optional)
+  retention_in_days = 90
+  kms_key_id        = "arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+
+  tags = {
+    Team = "platform"
+  }
+}
+```
 
 ## Module Documentation
 
@@ -68,3 +95,12 @@ Terraform atom: AWS CloudWatch Log Group - creates a log group for centralized l
 | <a name="output_enabled"></a> [enabled](#output\_enabled) | Whether the module is enabled |
 | <a name="output_name"></a> [name](#output\_name) | Name of the log group |
 <!-- END_TF_DOCS -->
+
+## Tests
+
+Unit tests use a mock AWS provider (plan-only, no real AWS calls):
+
+```bash
+terraform init -backend=false
+terraform test -test-directory=tests/unit   # or: make test-unit
+```
